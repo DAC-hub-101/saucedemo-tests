@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Testing
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+/test-results/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
