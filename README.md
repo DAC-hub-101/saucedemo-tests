@@ -2,28 +2,52 @@
 
 ## Project Overview
 
-Automated test suite for SauceDemo login functionality using Playwright.
+Automated test suite for SauceDemo login functionality using Playwright. This project implements comprehensive testing of the login functionality including various user scenarios, error handling, and state management.
 
 ## Prerequisites
 
 * Node.js (v14 or higher)
 * npm (comes with Node.js)
 * Git
+* VS Code (recommended)
 
 ## Installation Steps
 
-### 1. System Setup (Arch Linux)
+### System Setup
+
+#### Linux Package Managers
 
 ```bash
-# Install Node.js and npm
-sudo pacman -S nodejs npm
+# Debian/Ubuntu based systems
+sudo apt update
+sudo apt install nodejs npm git
+
+# RHEL/Fedora based systems
+sudo dnf install nodejs npm git
+
+# Arch Linux
+sudo pacman -S nodejs npm git
 
 # Verify installation
 node --version
 npm --version
+git --version
 ```
 
-### 2. Project Setup
+#### Using Node Version Manager (nvm) - All Distributions
+
+```bash
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Restart terminal or source profile
+source ~/.bashrc
+
+# Install latest LTS version of Node.js
+nvm install --lts
+```
+
+### Project Setup
 
 ```bash
 # Create project directory
@@ -40,7 +64,7 @@ npm install @playwright/test
 npx playwright install
 ```
 
-### 3. Project Structure
+### Project Structure
 
 ```
 saucedemo-tests/
@@ -49,19 +73,12 @@ saucedemo-tests/
 ├── playwright.config.ts
 ├── tests/
 │   └── login.spec.ts
-└── .gitignore
+├── .gitignore
+├── README.md
+└── TASK.md
 ```
 
 ## Configuration Files
-
-### .gitignore
-
-```
-node_modules/
-test-results/
-playwright-report/
-playwright/.cache/
-```
 
 ### package.json
 
@@ -80,7 +97,7 @@ playwright/.cache/
 }
 ```
 
-## Code Documentation
+## Test Implementation
 
 ### playwright.config.ts
 
@@ -102,42 +119,58 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-### login.spec.ts
+### Test Cases (login.spec.ts)
 
-File contains four test cases:
-
-1. **Verify Login Page Elements**
+#### 1. Basic Page Element Verification
 
 ```typescript
 test('verify login page elements', async ({ page }) => {
-  // Verifies presence of username, password fields and login button
+  await expect(page.locator('#user-name')).toBeVisible();
+  await expect(page.locator('#password')).toBeVisible();
+  await expect(page.locator('#login-button')).toBeVisible();
 });
 ```
 
-2. **Successful Login**
+#### 2. Valid User Tests
 
 ```typescript
-test('successful login with valid credentials', async ({ page }) => {
-  // Tests login with valid credentials
-  // Verifies redirect to inventory page
-});
+const validUsers = [
+  { username: 'standard_user', shouldPass: true },
+  { username: 'locked_out_user', shouldPass: false },
+  { username: 'problem_user', shouldPass: true },
+  { username: 'performance_glitch_user', shouldPass: true },
+  { username: 'error_user', shouldPass: true },
+  { username: 'visual_user', shouldPass: true }
+];
+
+for (const user of validUsers) {
+  test(`login attempt with ${user.username}`, async ({ page }) => {
+    // Test implementation details
+  });
+}
 ```
 
-3. **Failed Login**
+#### 3. Invalid Credentials Test
 
 ```typescript
 test('failed login with invalid credentials', async ({ page }) => {
-  // Tests login with invalid credentials
-  // Verifies error message
+  // Test implementation details
 });
 ```
 
-4. **Empty Fields**
+#### 4. Empty Fields Validation
 
 ```typescript
-test('error with empty fields', async ({ page }) => {
-  // Tests submission with empty fields
-  // Verifies validation message
+test('error with empty username but filled password', async ({ page }) => {
+  // Test implementation details
+});
+
+test('error with filled username but empty password', async ({ page }) => {
+  // Test implementation details
+});
+
+test('error with both empty fields', async ({ page }) => {
+  // Test implementation details
 });
 ```
 
@@ -146,26 +179,59 @@ test('error with empty fields', async ({ page }) => {
 #### BeforeEach Hook
 
 ```typescript
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context }) => {
+  // Clear all cookies before each test
+  await context.clearCookies();
+  
+  // Navigate to the login page
   await page.goto('https://www.saucedemo.com/');
+  
+  // Clear localStorage and sessionStorage
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
 });
 ```
 
-* Runs before each test
-* Navigates to the login page
-* Ensures fresh state for each test
-
-#### Locators
+#### Important Locators
 
 * `#user-name`: Username input field
 * `#password`: Password input field
 * `#login-button`: Login submit button
 * `[data-test="error"]`: Error message container
 * `.inventory_list`: Inventory page element (success verification)
+* `page.title()`: Page title verification
+
+#### Assertions
+
+1. Page Navigation
+
+```typescript
+await expect(page).toHaveURL('https://www.saucedemo.com/inventory.html');
+```
+
+2. Element Visibility
+
+```typescript
+await expect(page.locator('.inventory_list')).toBeVisible();
+```
+
+3. Error Messages
+
+```typescript
+await expect(errorMessage).toContainText('Username is required');
+```
+
+4. Page Title
+
+```typescript
+await expect(page).toHaveTitle('Swag Labs');
+```
 
 ## Running Tests
 
-### Basic Test Run
+### Basic Test Execution
 
 ```bash
 npx playwright test
@@ -178,38 +244,129 @@ npx playwright test --reporter=html
 npx playwright show-report
 ```
 
-### Run Specific Test
+### Run Specific Test File
 
 ```bash
 npx playwright test login.spec.ts
 ```
 
-### Run Tests in Debug Mode
+### Debug Mode
 
 ```bash
 npx playwright test --debug
 ```
 
+### Test Filtering
+
+```bash
+# Run tests with specific name
+npx playwright test -g "successful login"
+
+# Run tests in specific file
+npx playwright test tests/login.spec.ts
+```
+
 ## Test Report Analysis
 
-* View detailed test results with `npx playwright show-report`
-* Reports include:
-  * Test execution time
-  * Pass/fail status
-  * Error messages
-  * Screenshots (on failure)
-  * Trace viewer (when enabled)
+The HTML report includes:
+
+1. Test Execution Details
+   * Duration
+   * Status (passed/failed)
+   * Test suite hierarchy
+2. Failure Information
+   * Error messages
+   * Stack traces
+   * Screenshots
+3. Trace Viewer
+   * Timeline of actions
+   * Network requests
+   * Console logs
 
 ## Troubleshooting
 
-* **Test Timeouts**: Adjust timeouts in `playwright.config.ts`
-* **Element Not Found**: Check selectors and wait conditions
-* **Browser Issues**: Run `npx playwright install` to reinstall browsers
+### Common Issues and Solutions
+
+1. Timeout Issues
+   * Adjust global timeout in playwright.config.ts
+   * Modify expect timeout for specific assertions
+   * Check network conditions
+
+2. Element Location Problems
+   * Verify selector accuracy
+   * Check for dynamic content loading
+   * Use waitFor functions if needed
+
+3. Browser Issues
+   * Reinstall browsers: `npx playwright install`
+   * Check system requirements
+   * Verify browser dependencies
+
+4. Test Isolation
+   * Ensure beforeEach hook runs properly
+   * Verify cache/cookie clearing
+   * Check for residual state
+
+### Debug Techniques
+
+1. Visual Debugging
+   ```bash
+   npx playwright test --debug
+   ```
+
+2. Trace Recording
+   ```bash
+   npx playwright test --trace on
+   ```
+
+3. Screenshots
+   ```typescript
+   await page.screenshot({ path: 'screenshot.png' });
+   ```
 
 ## Best Practices
 
-1. Use data-test attributes for stable selectors
-2. Keep tests independent
-3. Clean up test data in afterEach hooks
-4. Use meaningful test descriptions
-5. Handle timeouts appropriately
+### 1. Selector Strategy
+
+* Use data-test attributes when possible
+* Maintain selector documentation
+* Keep selectors specific but resilient
+
+### 2. Test Independence
+
+* Clear state between tests
+* Avoid test interdependencies
+* Use beforeEach for setup
+
+### 3. Error Handling
+
+* Implement meaningful assertions
+* Add custom error messages
+* Handle expected failures gracefully
+
+### 4. Code Organization
+
+* Group related tests
+* Use descriptive test names
+* Maintain test file structure
+
+### 5. Performance
+
+* Optimize waits and timeouts
+* Handle dynamic content properly
+* Implement parallel execution when possible
+
+### Best Practices for Git
+
+1. Regular commits with meaningful messages
+2. Proper .gitignore configuration
+3. Branch usage for features/fixes
+4. Pull request reviews when applicable
+
+## Maintenance
+
+1. Regular updates of dependencies
+2. Periodic review of test coverage
+3. Documentation updates
+4. Performance optimization
+5. Code refactoring as needed
