@@ -1,4 +1,5 @@
 name: Playwright Tests
+
 on:
   push:
     branches: [ main ]
@@ -7,26 +8,37 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Use ubuntu-22.04 explicitly to avoid warnings about ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.41.0-jammy
     
     steps:
-    - uses: actions/checkout@v3
+    # Checkout the repository
+    - name: Checkout Code
+      uses: actions/checkout@v3
     
-    - name: Install dependencies
+    # Install dependencies using npm
+    - name: Install Dependencies
       run: npm ci
       
+    # Install Playwright browsers and dependencies
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
       
-    - name: Run Playwright tests
-      run: npx playwright test
-      
-    - name: Upload test results
-      if: always()
+    # Run Playwright tests
+    - name: Run Playwright Tests
+      run: npx playwright test --reporter=html
+
+    # Debug step to check files in the working directory
+    - name: Debug - List Files
+      run: ls -R
+
+    # Upload test results, ensuring workflow doesn't fail if no files are found
+    - name: Upload Playwright Report
+      if: always() # Ensure this step always runs even if tests fail
       uses: actions/upload-artifact@v4
       with:
         name: playwright-report
         path: playwright-report/
-        retention-days: 30
+        if-no-files-found: warn # Warn instead of failing if no files are found
+        retention-days: 30 # Set artifact retention to 30 days
